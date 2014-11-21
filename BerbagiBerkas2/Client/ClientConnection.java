@@ -11,16 +11,27 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class CLIENTConnection implements Runnable {
 
+    private ArrayList<CLIENTConnection> alThread;
     private Socket clientSocket;
     private BufferedReader in = null;
+    private SocketAddress sa = null;
+    private String namaUser;
 
-    public CLIENTConnection(Socket client) {
+  
+    public CLIENTConnection(Socket client, ArrayList<CLIENTConnection> alThread) throws SocketException
+    {
         this.clientSocket = client;
+        this.alThread=alThread;
+        this.sa = client.getRemoteSocketAddress();
+        this.namaUser=namaUser;
     }
 
     @Override
@@ -39,7 +50,8 @@ public class CLIENTConnection implements Runnable {
                         while ((outGoingFileName = in.readLine()) != null) {
                             sendFile(outGoingFileName);
                         }
-
+                    case "3":
+                        listUser();
                         break;
                     default:
                         System.out.println("Incorrect command received.");
@@ -77,7 +89,16 @@ public class CLIENTConnection implements Runnable {
             System.err.println("Client error. Connection closed.");
         }
     }
-
+    
+    public void listUser()
+    {
+        for(int i=0; i<alThread.size(); i++)
+        {
+            System.out.print(alThread.get(i).getNamaClient().getInetAddress() + " - ");
+            
+        }
+    }
+    
     public void sendFile(String fileName) {
         try {
             //handle file read
@@ -104,5 +125,11 @@ public class CLIENTConnection implements Runnable {
         } catch (Exception e) {
             System.err.println("File does not exist!");
         } 
+    }
+
+    Socket getNamaClient() {
+        return clientSocket; 
+        //return namaUser;
+        
     }
 }
