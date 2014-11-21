@@ -14,16 +14,19 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class FileClient {
 
+    private ArrayList<CLIENTConnection> alThread;
     private static Socket sock;
     private static String fileName;
     private static BufferedReader stdin;
     private static PrintStream os;
-
+    //private ArrayList<namaUser>;
+    
     public static void main(String[] args) throws IOException {
         try {
             sock = new Socket("localhost", 4444);
@@ -48,6 +51,10 @@ public class FileClient {
                 os.println(fileName);
                 receiveFile(fileName);
                 break;
+             case 3:
+                os.println("3");
+                listUser();
+                break;    
         }
         } catch (Exception e) {
             System.err.println("not valid input");
@@ -60,6 +67,7 @@ public class FileClient {
     public static String selectAction() throws IOException {
         System.out.println("1. Upload file.");
         System.out.println("2. Download file.");
+        System.out.println("3. List Active User.");
         System.out.print("\nMake selection: ");
 
         return stdin.readLine();
@@ -91,6 +99,15 @@ public class FileClient {
             System.out.println("File "+fileName+" sent to Server.");
         } catch (Exception e) {
             System.err.println("File does not exist!");
+        }
+    }
+    
+    public void listUser()
+    {
+        for(int i=0; i<alThread.size(); i++)
+        {
+            System.out.print(alThread.get(i).getNamaClient().getInetAddress() + " - ");
+            
         }
     }
 
