@@ -58,8 +58,8 @@ public class FileClient {
     }
 
     public static String selectAction() throws IOException {
-        System.out.println("1. Send file.");
-        System.out.println("2. Recieve file.");
+        System.out.println("1. Upload file.");
+        System.out.println("2. Download file.");
         System.out.print("\nMake selection: ");
 
         return stdin.readLine();
