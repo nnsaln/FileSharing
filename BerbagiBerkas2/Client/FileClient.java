@@ -1,4 +1,4 @@
-package filesharingclient;
+package klienberbagiberkas2;
 
 
 import java.io.BufferedInputStream;
@@ -31,31 +31,55 @@ public class FileClient {
         try {
             sock = new Socket("localhost", 4444);
             stdin = new BufferedReader(new InputStreamReader(System.in));
+            
         } catch (Exception e) {
             System.err.println("Cannot connect to the server, try again later.");
             System.exit(1);
         }
-
+        int bytesRead;
+        InputStream in = sock.getInputStream();
+        DataInputStream clientData = new DataInputStream(in);
         os = new PrintStream(sock.getOutputStream());
 
         try {
-              switch (Integer.parseInt(selectAction())) {
-            case 1:
-                os.println("1");
-                sendFile();
-                break;
-            case 2:
-                os.println("2");
-                System.err.print("Enter file name: ");
-                fileName = stdin.readLine();
-                os.println(fileName);
-                receiveFile(fileName);
-                break;
-             case 3:
-                os.println("3");
-                listUser();
-                break;    
-        }
+            while(true)
+            {
+                switch (Integer.parseInt(selectAction())) {
+                case 1:
+                    os.println("1");
+                    sendFile();
+                    break;
+                case 2:
+                    os.println("2");
+                    System.err.print("Enter file name: ");
+                    fileName = stdin.readLine();
+                    os.println(fileName);
+                    try 
+                    {
+                            fileName = clientData.readUTF();
+                            OutputStream output = new FileOutputStream(fileName);
+                            long size = clientData.readLong();
+                            byte[] buffer = new byte[1024];
+                            while (size > 0 && (bytesRead = clientData.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
+                                output.write(buffer, 0, bytesRead);
+                                size -= bytesRead;
+                            }
+                            output.close();
+                            System.out.println("File "+fileName+" received from Server.");
+                    } catch (IOException ex) {
+                            Logger.getLogger(CLIENTConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    break;
+                // case 3:
+                  //  os.println("3");
+                    //listUser();
+                default:
+                    os.println("4");
+                    System.out.println("Incorrect command received.");
+                    break;
+                }
+            }
+        in.close();
         } catch (Exception e) {
             System.err.println("not valid input");
         }
@@ -75,9 +99,10 @@ public class FileClient {
 
     public static void sendFile() {
         try {
+            
             System.err.print("Enter file name: ");
             fileName = stdin.readLine();
-
+            System.out.println(fileName);
             File myFile = new File(fileName);
             byte[] mybytearray = new byte[(int) myFile.length()];
 
@@ -97,11 +122,12 @@ public class FileClient {
             dos.write(mybytearray, 0, mybytearray.length);
             dos.flush();
             System.out.println("File "+fileName+" sent to Server.");
+           
         } catch (Exception e) {
-            System.err.println("File does not exist!");
+            System.err.println("File does not exist!:" + e.getMessage());
         }
     }
-    
+   /* 
     public void listUser()
     {
         for(int i=0; i<alThread.size(); i++)
@@ -110,29 +136,8 @@ public class FileClient {
             
         }
     }
-
-    public static void receiveFile(String fileName) {
-        try {
-            int bytesRead;
-            InputStream in = sock.getInputStream();
-
-            DataInputStream clientData = new DataInputStream(in);
-
-            fileName = clientData.readUTF();
-            OutputStream output = new FileOutputStream(("received_from_server_" + fileName));
-            long size = clientData.readLong();
-            byte[] buffer = new byte[1024];
-            while (size > 0 && (bytesRead = clientData.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
-                output.write(buffer, 0, bytesRead);
-                size -= bytesRead;
-            }
-
-            output.close();
-            in.close();
-
-            System.out.println("File "+fileName+" received from Server.");
-        } catch (IOException ex) {
-            Logger.getLogger(CLIENTConnection.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+*/
+    //public static void receiveFile(String fileName) {
+        
+    //}
 }
