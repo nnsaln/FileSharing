@@ -1,4 +1,4 @@
-package filesharingclient;
+package klienberbagiberkas2;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -50,17 +50,18 @@ public class CLIENTConnection implements Runnable {
                         while ((outGoingFileName = in.readLine()) != null) {
                             sendFile(outGoingFileName);
                         }
+                        break;
                     case "3":
                         listUser();
+                        break;
+                    case "-1":
                         break;
                     default:
                         System.out.println("Incorrect command received.");
                         break;
                 }
-                in.close();
-                break;
             }
-
+            in.close();
         } catch (IOException ex) {
             Logger.getLogger(CLIENTConnection.class.getName()).log(Level.SEVERE, null, ex);
         }
