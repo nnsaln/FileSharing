@@ -1,4 +1,4 @@
-package filesharing;
+package serverberbagiberkas2;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -11,16 +11,33 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class CLIENTConnection implements Runnable {
 
+    private ArrayList<CLIENTConnection> alThread;
     private Socket clientSocket;
     private BufferedReader in = null;
+    private SocketAddress sa = null;
+    private String namaUser;
+    private Object stdin;
 
-    public CLIENTConnection(Socket client) {
+  
+    public CLIENTConnection(Socket client, ArrayList<CLIENTConnection> alThread) throws SocketException
+    {
         this.clientSocket = client;
+        this.alThread=alThread;
+        this.sa = client.getRemoteSocketAddress();
+        //this.namaUser=namaUser;
+    }
+    
+    public void setAL(ArrayList<CLIENTConnection> alThread)
+    {
+        this.alThread = alThread;
     }
 
     @Override
@@ -29,24 +46,64 @@ public class CLIENTConnection implements Runnable {
             in = new BufferedReader(new InputStreamReader(
                     clientSocket.getInputStream()));
             String clientSelection;
+            int bytesRead;
+            DataInputStream clientData = new DataInputStream(clientSocket.getInputStream());
             while ((clientSelection = in.readLine()) != null) {
+                System.out.println("ulangi");
+                for (int i = 0; i < alThread.size(); i++)
+                {
+                    System.out.print(alThread.get(i).getSA());
+                }
+                System.out.print("\n");
                 switch (clientSelection) {
                     case "1":
-                        receiveFile();
+                        //receiveFile();
+                        try {
+                                
+
+                                String fileName = clientData.readUTF();
+                                OutputStream output = new FileOutputStream(fileName);
+                                long size = clientData.readLong();
+                                byte[] buffer = new byte[1024];
+                                while (size > 0 && (bytesRead = clientData.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
+                                    output.write(buffer, 0, bytesRead);
+                                    size -= bytesRead;
+                                }
+
+                                output.close();
+                                //clientData.close();
+
+                                System.out.println("File "+fileName+" received from client.");
+
+                            } catch (IOException ex) {
+                                System.err.println("Client error. Connection closed.");
+                            }
                         break;
                     case "2":
                         String outGoingFileName;
                         while ((outGoingFileName = in.readLine()) != null) {
                             sendFile(outGoingFileName);
                         }
-
                         break;
+                    case "-1":
+                        in.close();
+                        break;
+                   // case "3":
+                     //   listUser();
+                       // break;
                     default:
                         System.out.println("Incorrect command received.");
+                        //in.close();
                         break;
                 }
-                in.close();
-                break;
+                
+            }
+            clientData.close();
+            in.close();
+            System.out.println("in ditutup");
+            synchronized(alThread)
+            {
+                alThread.remove(this);
             }
 
         } catch (IOException ex) {
@@ -54,30 +111,19 @@ public class CLIENTConnection implements Runnable {
         }
     }
 
-    public void receiveFile() {
-        try {
-            int bytesRead;
-
-            DataInputStream clientData = new DataInputStream(clientSocket.getInputStream());
-
-            String fileName = clientData.readUTF();
-            OutputStream output = new FileOutputStream(("received_from_client_" + fileName));
-            long size = clientData.readLong();
-            byte[] buffer = new byte[1024];
-            while (size > 0 && (bytesRead = clientData.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
-                output.write(buffer, 0, bytesRead);
-                size -= bytesRead;
-            }
-
-            output.close();
-            clientData.close();
-
-            System.out.println("File "+fileName+" received from client.");
-        } catch (IOException ex) {
-            System.err.println("Client error. Connection closed.");
+   // public void receiveFile() {
+        
+   // }
+    /*
+    public void listUser()
+    {
+        for(int i=0; i<alThread.size(); i++)
+        {
+            System.out.print(alThread.get(i).getNamaClient().getInetAddress() + " - ");
+            
         }
     }
-
+    */
     public void sendFile(String fileName) {
         try {
             //handle file read
@@ -105,4 +151,10 @@ public class CLIENTConnection implements Runnable {
             System.err.println("File does not exist!");
         } 
     }
+
+    SocketAddress getSA() {
+        return sa; 
+        //return namaUser;
+    }
+
 }
