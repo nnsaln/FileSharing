@@ -47,6 +47,7 @@ public class FileClient {
             System.exit(1);
         }
         int bytesRead;
+        boolean exit = false;
         InputStream in = sock.getInputStream();
         DataInputStream clientData = new DataInputStream(in);
         os = new PrintStream(sock.getOutputStream());
@@ -84,10 +85,12 @@ public class FileClient {
                     os.println("3");
                     String user;
                     System.out.print("List User:\n");
-                    while((user = clientData.readUTF()) != null)
+                    int size = clientData.readInt();
+                    for (int i = 0; i < size; i++)
                     {
-                        System.out.println(user);
+                        System.out.println(clientData.readUTF());
                     }
+                    System.out.println("selesai list");
                     break;
                 case 4:
                     os.println("4");
@@ -105,18 +108,21 @@ public class FileClient {
                         }
                     }
                     break;
+                case 5:
+                    os.println("5");
+                    exit = true;
+                    break;
                 default:
                     os.println("4");
                     System.out.println("Incorrect command received.");
                     break;
                 }
+                if (exit) break;
             }
         in.close();
         } catch (Exception e) {
             System.err.println("not valid input" + e.getMessage());
         }
-
-
         sock.close();
     }
 
@@ -125,6 +131,7 @@ public class FileClient {
         System.out.println("2. Download file.");
         System.out.println("3. List Active User. (refresh)");
         System.out.println("4. List File.");
+        System.out.println("5. Leave Community.");
         System.out.print("\nMake selection: ");
 
         return stdin.readLine();
@@ -160,17 +167,4 @@ public class FileClient {
             System.err.println("File does not exist!:" + e.getMessage());
         }
     }
-   /* 
-    public void listUser()
-    {
-        for(int i=0; i<alThread.size(); i++)
-        {
-            System.out.print(alThread.get(i).getNamaClient().getInetAddress() + " - ");
-            
-        }
-    }
-*/
-    //public static void receiveFile(String fileName) {
-        
-    //}
 }
