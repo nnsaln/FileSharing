@@ -1,8 +1,8 @@
-package serverberbagiberkas2;
+package filesharing;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -11,7 +11,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
@@ -22,12 +21,15 @@ import java.util.logging.Logger;
 public class CLIENTConnection implements Runnable {
 
     private ArrayList<CLIENTConnection> alThread;
-    private String serverDirPath = "/home/kromatin/Documents/kodingan/java/ServerBerbagiBerkas2/";
+    private String serverDirPath = "C:/Users/An Nisa/Documents/NetBeansProjects/FileSharing/";
     private Socket clientSocket;
     private BufferedReader in = null;
     private SocketAddress sa = null;
+    private BufferedOutputStream bos = null;
     private String namaUser;
     private Object stdin;
+    private String listFiles;
+    //private Object osList;
 
   
     public CLIENTConnection(Socket client, ArrayList<CLIENTConnection> alThread) throws SocketException
@@ -52,6 +54,7 @@ public class CLIENTConnection implements Runnable {
             int bytesRead;
             boolean exit = false;
             DataInputStream clientData = new DataInputStream(clientSocket.getInputStream());
+            DataInputStream clientData2 = new DataInputStream(clientSocket.getInputStream());
             while ((clientSelection = in.readLine()) != null) {
                 System.out.println("ulangi");
                 for (int i = 0; i < alThread.size(); i++)
@@ -68,6 +71,7 @@ public class CLIENTConnection implements Runnable {
                                 byte[] buffer = new byte[1024];
                                 while (size > 0 && (bytesRead = clientData.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
                                     output.write(buffer, 0, bytesRead);
+                                    output.flush();
                                     size -= bytesRead;
                                 }
                                 output.close();
@@ -90,18 +94,69 @@ public class CLIENTConnection implements Runnable {
                         OutputStream os = clientSocket.getOutputStream();
                         DataOutputStream dos = new DataOutputStream(os);
                         dos.writeInt(alThread.size());
+                        dos.flush();
                         for (int i = 0; i < alThread.size(); i++)
                         {
                             System.out.println(alThread.get(i).getSocket().getInetAddress().toString());
-                            try{dos.writeUTF(alThread.get(i).getSocket().getInetAddress().toString());}
+                            try{dos.writeUTF(alThread.get(i).getSocket().getInetAddress().toString());
+                            dos.flush();}
                             catch (Exception err)
                             {
                                 System.out.println(err.getMessage());
                             }
                         }
+                        
                         System.out.println("selesai list");
+                        //clientData.reset();
                         break;
+                    case "4":
+                        File folder = new File("C:/Users/An Nisa/Documents/NetBeansProjects/FileSharing/");
+                        File[] listOfFiles = folder.listFiles();
+                        System.out.println("List of Files:");
+                        for (int i = 0; i < listOfFiles.length; i++) {
+                            if (listOfFiles[i].isFile()) 
+                            { 
+                                listFiles=listOfFiles[i].getName();
+                                System.out.println(listFiles);
+                                //System.out.println(listOfFiles[i].getName());
+                            } else if (listOfFiles[i].isDirectory()) 
+                            {
+                            //System.out.println("Directory " + listOfFiles[i].getName());
+                            continue;
+                            }
+                        OutputStream osList;
+                        osList = clientSocket.getOutputStream();
+                        DataOutputStream dosList = new DataOutputStream(osList);
+                        dosList.writeInt(listOfFiles.length);
+                        dosList.flush();
+                        for (int j = 0; j < listOfFiles.length; j++)
+                        {
+                          
+                            try{dosList.writeUTF(listOfFiles[j].getName());
+                            dosList.flush();}
+                            
+                            catch (Exception err)
+                            {
+                                System.out.println(err.getMessage());
+                            }
+                        }
+                        
+                        System.out.println("selesai list");    
+                        }
+                        
+                        //clientData.reset();
+                        break;   
+                    
                     case "5":
+                        String outGoingFileName2;
+                        while ((outGoingFileName2 = in.readLine()) != null) {
+                            outGoingFileName2 = this.serverDirPath + outGoingFileName2;
+                            sendBroadcast(outGoingFileName2);
+                        }
+                        break;
+                        
+
+                    case "6":
                         exit = true;
                         break;
                     default:
@@ -124,6 +179,46 @@ public class CLIENTConnection implements Runnable {
             Logger.getLogger(CLIENTConnection.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+    
+    public void send(String fileName) throws IOException
+    {
+       try {
+            //handle file read
+            File myFile = new File(fileName);
+            byte[] mybytearray = new byte[(int) myFile.length()];
+
+            FileInputStream fis = new FileInputStream(myFile);
+            BufferedInputStream bis = new BufferedInputStream(fis);
+            //bis.read(mybytearray, 0, mybytearray.length);
+
+            DataInputStream dis = new DataInputStream(bis);
+            dis.readFully(mybytearray, 0, mybytearray.length);
+
+            //handle file send over socket
+            OutputStream os = clientSocket.getOutputStream();
+
+            //Sending file name and file size to the server
+            DataOutputStream dos = new DataOutputStream(os);
+            dos.writeUTF(myFile.getName());
+            dos.flush();
+            dos.writeLong(mybytearray.length);
+            dos.flush();
+            dos.write(mybytearray, 0, mybytearray.length);
+            dos.flush();
+            System.out.println("File "+fileName+" sent to client.");
+        } catch (Exception e) {
+            System.err.println("File does not exist!");
+        } 
+    }
+    
+    public synchronized void sendBroadcast(String fileName) throws IOException
+    {
+        for(int i=0;i<this.alThread.size();i++)
+        {
+            CLIENTConnection cc = this.alThread.get(i);
+            cc.send(fileName);
+        }
+    }
 
     public void sendFile(String fileName, Socket clientSocket) {
         try {
@@ -144,7 +239,9 @@ public class CLIENTConnection implements Runnable {
             //Sending file name and file size to the server
             DataOutputStream dos = new DataOutputStream(os);
             dos.writeUTF(myFile.getName());
+            dos.flush();
             dos.writeLong(mybytearray.length);
+            dos.flush();
             dos.write(mybytearray, 0, mybytearray.length);
             dos.flush();
             System.out.println("File "+fileName+" sent to client.");
