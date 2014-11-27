@@ -1,9 +1,10 @@
-package klienberbagiberkas2;
+package filesharingclient;
 
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
+import static java.io.DataInputStream.readUTF;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -50,6 +51,7 @@ public class FileClient {
         boolean exit = false;
         InputStream in = sock.getInputStream();
         DataInputStream clientData = new DataInputStream(in);
+        DataInputStream clientData2 = new DataInputStream(in);
         os = new PrintStream(sock.getOutputStream());
 
         try {
@@ -90,30 +92,50 @@ public class FileClient {
                     {
                         System.out.println(clientData.readUTF());
                     }
-                    System.out.println("selesai list");
+                    System.out.println("selesai list user");
                     break;
                 case 4:
                     os.println("4");
-                    //sur ini pake list folder dari serverku, kalo mau nyoba pake folder servermu sur
-                    File folder = new File("C:/Users/An Nisa/Documents/NetBeansProjects/FileSharing/");
-                    File[] listOfFiles = folder.listFiles();
-                    System.out.println("List of Files:");
-                    for (int i = 0; i < listOfFiles.length; i++) {
-                        if (listOfFiles[i].isFile()) 
-                        { 
-                            System.out.println(listOfFiles[i].getName());
-                        } else if (listOfFiles[i].isDirectory()) {
-                        //System.out.println("Directory " + listOfFiles[i].getName());
-                        continue;
-                        }
+                    String list;
+                    System.out.print("List Files:\n");
+                    int sizeList = clientData2.readInt();
+                    for (int i = 0; i < sizeList; i++)
+                    {
+                        System.out.println(clientData2.readUTF());
+                        //readUTF().clear();
+                        
                     }
+                    
+                    System.out.println("selesai list files");
                     break;
                 case 5:
                     os.println("5");
+                    System.err.print("Enter file name: ");
+                    fileName = stdin.readLine();
+                    os.println(fileName);
+                    try 
+                    {
+                            fileName = clientData.readUTF();
+                            OutputStream output = new FileOutputStream(fileName);
+                            long size2 = clientData.readLong();
+                            byte[] buffer = new byte[1024];
+                            while (size2 > 0 && (bytesRead = clientData.read(buffer, 0, (int) Math.min(buffer.length, size2))) != -1) {
+                                output.write(buffer, 0, bytesRead);
+                                size2 -= bytesRead;
+                            }
+                            output.close();
+                            System.out.println("File "+fileName+" received from Server.");
+                    } catch (IOException ex) {
+                            Logger.getLogger(CLIENTConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    break;
+                    
+                case 6:
+                    os.println("6");
                     exit = true;
                     break;
                 default:
-                    os.println("4");
+                    os.println("7");
                     System.out.println("Incorrect command received.");
                     break;
                 }
