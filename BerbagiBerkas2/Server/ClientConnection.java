@@ -95,6 +95,7 @@ public class CLIENTConnection implements Runnable {
                         DataOutputStream dos = new DataOutputStream(os);
                         dos.writeInt(alThread.size());
                         dos.flush();
+                  
                         for (int i = 0; i < alThread.size(); i++)
                         {
                             System.out.println(alThread.get(i).getSocket().getInetAddress().toString());
@@ -105,7 +106,7 @@ public class CLIENTConnection implements Runnable {
                                 System.out.println(err.getMessage());
                             }
                         }
-                        
+                        //dos.close();
                         System.out.println("selesai list");
                         //clientData.reset();
                         break;
@@ -113,36 +114,31 @@ public class CLIENTConnection implements Runnable {
                         File folder = new File("C:/Users/An Nisa/Documents/NetBeansProjects/FileSharing/");
                         File[] listOfFiles = folder.listFiles();
                         System.out.println("List of Files:");
-                        for (int i = 0; i < listOfFiles.length; i++) {
-                            if (listOfFiles[i].isFile()) 
-                            { 
-                                listFiles=listOfFiles[i].getName();
-                                System.out.println(listFiles);
-                                //System.out.println(listOfFiles[i].getName());
-                            } else if (listOfFiles[i].isDirectory()) 
-                            {
-                            //System.out.println("Directory " + listOfFiles[i].getName());
-                            continue;
-                            }
-                        OutputStream osList;
-                        osList = clientSocket.getOutputStream();
-                        DataOutputStream dosList = new DataOutputStream(osList);
-                        dosList.writeInt(listOfFiles.length);
-                        dosList.flush();
-                        for (int j = 0; j < listOfFiles.length; j++)
-                        {
-                          
-                            try{dosList.writeUTF(listOfFiles[j].getName());
-                            dosList.flush();}
-                            
-                            catch (Exception err)
-                            {
-                                System.out.println(err.getMessage());
-                            }
-                        }
                         
-                        System.out.println("selesai list");    
-                        }
+                            OutputStream osList;
+                            osList = clientSocket.getOutputStream();
+                            DataOutputStream dosList = new DataOutputStream(osList);
+                            dosList.writeInt(listOfFiles.length);
+                            dosList.flush();
+                            for (int j = 0; j < listOfFiles.length; j++)
+                            {
+
+                                try
+                                {
+                                    listFiles = listOfFiles[j].getName();
+                                    dosList.writeUTF(listFiles);
+                                    dosList.flush();
+
+                                }
+
+                                catch (Exception err)
+                                {
+                                    System.out.println(err.getMessage());
+                                }
+                            }
+                            //dosList.close();
+                            System.out.println("selesai list");    
+                        
                         
                         //clientData.reset();
                         break;   
@@ -205,6 +201,7 @@ public class CLIENTConnection implements Runnable {
             dos.flush();
             dos.write(mybytearray, 0, mybytearray.length);
             dos.flush();
+            //dos.close();
             System.out.println("File "+fileName+" sent to client.");
         } catch (Exception e) {
             System.err.println("File does not exist!");
@@ -244,6 +241,7 @@ public class CLIENTConnection implements Runnable {
             dos.flush();
             dos.write(mybytearray, 0, mybytearray.length);
             dos.flush();
+            //dos.close();
             System.out.println("File "+fileName+" sent to client.");
         } catch (Exception e) {
             System.err.println("File does not exist!");
