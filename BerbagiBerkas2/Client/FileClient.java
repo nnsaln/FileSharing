@@ -75,6 +75,7 @@ public class FileClient {
                             byte[] buffer = new byte[1024];
                             while (size > 0 && (bytesRead = clientData.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1) {
                                 output.write(buffer, 0, bytesRead);
+                                output.flush();
                                 size -= bytesRead;
                             }
                             output.close();
@@ -121,7 +122,9 @@ public class FileClient {
                             byte[] buffer = new byte[1024];
                             while (size2 > 0 && (bytesRead = clientData.read(buffer, 0, (int) Math.min(buffer.length, size2))) != -1) {
                                 output.write(buffer, 0, bytesRead);
+                                output.flush();
                                 size2 -= bytesRead;
+                                
                             }
                             output.close();
                             System.out.println("File "+fileName+" received from Server.");
@@ -135,7 +138,7 @@ public class FileClient {
                     exit = true;
                     break;
                 default:
-                    os.println("7");
+                    //os.println("7");
                     System.out.println("Incorrect command received.");
                     break;
                 }
@@ -151,9 +154,10 @@ public class FileClient {
     public static String selectAction() throws IOException {
         System.out.println("1. Upload file.");
         System.out.println("2. Download file.");
-        System.out.println("3. List Active User. (refresh)");
+        System.out.println("3. List Active User.");
         System.out.println("4. List File.");
-        System.out.println("5. Leave Community.");
+        System.out.println("5. Broadcast File.");
+        System.out.println("6. Leave Community.");
         System.out.print("\nMake selection: ");
 
         return stdin.readLine();
@@ -183,6 +187,7 @@ public class FileClient {
             dos.writeLong(mybytearray.length);
             dos.write(mybytearray, 0, mybytearray.length);
             dos.flush();
+            //dos.close();
             System.out.println("File "+fileName+" sent to Server.");
            
         } catch (Exception e) {
